@@ -1,13 +1,13 @@
 [package]
-name = "simple-http-server"
-version = "0.6.1"
-authors = ["thewawar <thewawar@gmail.com>"]
-license = "MIT"
+authors = ["thewawar <thewawar@gmail.com>", "Outvi V <oss@outv.im>"]
 description = "Simple HTTP server"
-readme = "README.md"
-keywords = ["simple", "http", "server", "static", "file"]
-repository = "https://github.com/TheWaWaR/simple-http-server"
 edition = "2018"
+keywords = ["simple", "http", "server", "static", "file"]
+license = "MIT"
+name = "simple-http-server"
+readme = "README.md"
+repository = "https://github.com/outloudvi/simple-http-server"
+version = "0.6.1"
 
 [dependencies]
 clap = "2.33.0"
