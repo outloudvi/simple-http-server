@@ -519,6 +519,23 @@ impl MainHandler {
             });
         }
 
+        let mut handlebars = Handlebars::new();
+        handlebars
+            .register_template_file("page", "./src/templates/page.hbs")
+            .unwrap();
+        handlebars
+            .register_template_file("upload", "./src/templates/upload.hbs")
+            .unwrap();
+        handlebars
+            .register_template_file("list_header", "./src/templates/list_header.hbs")
+            .unwrap();
+        handlebars
+            .register_template_file("list_item", "./src/templates/list_item.hbs")
+            .unwrap();
+        handlebars
+            .register_template_file("list_item_parent", "./src/templates/list_item_parent.hbs")
+            .unwrap();
+
         // Breadcrumb navigation
         let breadcrumb = if !path_prefix.is_empty() {
             let mut breadcrumb = path_prefix.to_owned();
@@ -612,20 +629,17 @@ impl MainHandler {
 
             let mut current_link = path_prefix.to_owned();
             current_link.push("".to_owned());
-            format!(
-                r#"
-<tr>
-  <th><a href="/{link}?sort=name&order={name_order}">Name</a></th>
-  <th><a href="/{link}?sort=modified&order={modified_order}">Last modified</a></th>
-  <th><a href="/{link}?sort=size&order={size_order}">Size</a></th>
-</tr>
-<tr><td style="border-top:1px dashed #BBB;" colspan="5"></td></tr>
-"#,
-                link = encode_link_path(&current_link),
-                name_order = order_labels.get("name").unwrap_or(&DEFAULT_ORDER),
-                modified_order = order_labels.get("modified").unwrap_or(&DEFAULT_ORDER),
-                size_order = order_labels.get("size").unwrap_or(&DEFAULT_ORDER)
-            )
+            handlebars
+                .render(
+                    "list_header",
+                    &json!({
+                        "link": encode_link_path(&current_link),
+                        "name_order":  order_labels.get("name").unwrap_or(&DEFAULT_ORDER),
+                        "modified_order": order_labels.get("modified").unwrap_or(&DEFAULT_ORDER),
+                        "size_order":  order_labels.get("size").unwrap_or(&DEFAULT_ORDER)
+                    }),
+                )
+                .unwrap()
         } else {
             "".to_owned()
         };
@@ -637,16 +651,14 @@ impl MainHandler {
             if !link.is_empty() {
                 link.push("".to_owned());
             }
-            rows.push(format!(
-                r#"
-<tr>
-  <td><a href="/{link}"><strong>[Up]</strong></a></td>
-  <td></td>
-  <td></td>
-</tr>
-"#,
-                link = encode_link_path(&link)
-            ));
+            rows.push(
+                handlebars
+                    .render(
+                        "list_item_parent",
+                        &json!({ "link": encode_link_path(&link) }),
+                    )
+                    .unwrap(),
+            );
         } else {
             rows.push(r#"<tr><td>&nbsp;</td></tr>"#.to_owned());
         }
@@ -692,32 +704,21 @@ impl MainHandler {
             };
 
             // Render one directory entry
-            rows.push(format!(
-                r#"
-<tr>
-  <td><a {linkstyle} href="/{link}">{label}</a></td>
-  <td style="color:#888;">[{modified}]</td>
-  <td><bold>{filesize}</bold></td>
-</tr>
-"#,
-                linkstyle = link_style,
-                link = encode_link_path(&link),
-                label = encode_minimal(&file_name_label),
-                modified = file_modified,
-                filesize = file_size
-            ));
+            rows.push(
+                handlebars
+                    .render(
+                        "list_item",
+                        &json!({
+                            "linkstyle": link_style,
+                            "link": encode_link_path(&link),
+                            "label": encode_minimal(&file_name_label),
+                            "modified": file_modified,
+                            "filesize": file_size
+                        }),
+                    )
+                    .unwrap(),
+            );
         }
-
-        let mut obj = Map::<String, Value>::new();
-        obj.insert("name".to_string(), to_json("miku"));
-
-        let mut handlebars = Handlebars::new();
-        handlebars
-            .register_template_file("page", "./src/templates/page.hbs")
-            .unwrap();
-        handlebars
-            .register_template_file("upload", "./src/templates/upload.hbs")
-            .unwrap();
 
         // Optinal upload form
         let upload_form = if self.upload {
