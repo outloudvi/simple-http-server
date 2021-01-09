@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use clap::crate_version;
+use handlebars::{to_json, Handlebars};
 use htmlescape::encode_minimal;
 use iron::headers;
 use iron::headers::{AcceptEncoding, ContentEncoding, Encoding, QualityItem};
@@ -26,6 +27,10 @@ use multipart::server::{Multipart, SaveResult};
 use path_dedot::ParseDot;
 use percent_encoding::percent_decode;
 use pretty_bytes::converter::convert;
+use serde_json::{
+    json,
+    value::{Map, Value},
+};
 use termcolor::{Color, ColorSpec};
 
 use color::{build_spec, Printer};
@@ -721,31 +726,21 @@ impl MainHandler {
             "".to_owned()
         };
 
+        let file_list = format!("<table>{}{}</table>", sort_links, rows.join("\n"));
+
+        let html = handlebars
+            .render(
+                "page",
+                &json!({
+                    "comp__directory": breadcrumb,
+                    "comp__upload": upload_form,
+                    "comp__file_list": file_list
+                }),
+            )
+            .unwrap();
+
         // Put all parts together
-        resp.set_mut(format!(
-            r#"<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <style> a {{ text-decoration:none; }} </style>
-</head>
-<body>
-  {upload_form}
-  <div>{breadcrumb}</div>
-  <hr />
-  <table>
-    {sort_links}
-    {rows}
-  </table>
-</body>
-</html>
-"#,
-            upload_form = upload_form,
-            breadcrumb = breadcrumb,
-            sort_links = sort_links,
-            rows = rows.join("\n")
-        ));
+        resp.set_mut(html);
 
         resp.headers.set(headers::ContentType::html());
         if self.compress.is_some() {
