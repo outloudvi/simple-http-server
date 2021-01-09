@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use clap::crate_version;
-use handlebars::{to_json, Handlebars};
+use handlebars::Handlebars;
 use htmlescape::encode_minimal;
 use iron::headers;
 use iron::headers::{AcceptEncoding, ContentEncoding, Encoding, QualityItem};
@@ -27,10 +27,7 @@ use multipart::server::{Multipart, SaveResult};
 use path_dedot::ParseDot;
 use percent_encoding::percent_decode;
 use pretty_bytes::converter::convert;
-use serde_json::{
-    json,
-    value::{Map, Value},
-};
+use serde_json::json;
 use termcolor::{Color, ColorSpec};
 
 use color::{build_spec, Printer};
@@ -711,17 +708,22 @@ impl MainHandler {
             ));
         }
 
+        let mut obj = Map::<String, Value>::new();
+        obj.insert("name".to_string(), to_json("miku"));
+
+        let mut handlebars = Handlebars::new();
+        handlebars
+            .register_template_file("page", "./src/templates/page.hbs")
+            .unwrap();
+        handlebars
+            .register_template_file("upload", "./src/templates/upload.hbs")
+            .unwrap();
+
         // Optinal upload form
         let upload_form = if self.upload {
-            format!(
-                r#"
-<form style="margin-top:1em; margin-bottom:1em;" action="/{path}" method="POST" enctype="multipart/form-data">
-  <input type="file" name="files" accept="*" multiple />
-  <input type="submit" value="Upload" />
-</form>
-"#,
-                path = encode_link_path(path_prefix)
-            )
+            handlebars
+                .render("upload", &json!({ "path": encode_link_path(path_prefix) }))
+                .unwrap()
         } else {
             "".to_owned()
         };
