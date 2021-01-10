@@ -63,9 +63,9 @@ fn main() {
                  }
              })
              .help("Root directory"))
-        .arg(clap::Arg::with_name("index")
-             .short("i")
-             .long("index")
+        .arg(clap::Arg::with_name("render")
+             .short("r")
+             .long("render")
              .help("Enable automatic render index page [index.html, index.htm]"))
         .arg(clap::Arg::with_name("upload")
              .short("u")
@@ -205,7 +205,7 @@ fn main() {
         .value_of("root")
         .map(|s| PathBuf::from(s).canonicalize().unwrap())
         .unwrap_or_else(|| env::current_dir().unwrap());
-    let index = matches.is_present("index");
+    let render = matches.is_present("render");
     let upload = matches.is_present("upload");
     let redirect_to = matches
         .value_of("redirect")
@@ -249,7 +249,8 @@ fn main() {
     if !silent {
         printer
             .println_out(
-                r#"     Index: {}, Upload: {}, Cache: {}, Cors: {}, Range: {}, Sort: {}, Threads: {}
+                r#"   Auto render: {}, Upload: {}, Cache: {}
+          Cors: {}, Range: {}, Sort: {}, Threads: {}
           Auth: {}, Compression: {}
          https: {}, Cert: {}, Cert-Password: {}
           Root: {},
@@ -257,7 +258,7 @@ fn main() {
        Address: {}
     ======== [{}] ========"#,
                 &vec![
-                    enable_string(index),
+                    enable_string(render),
                     enable_string(upload),
                     enable_string(cache),
                     enable_string(cors),
@@ -292,7 +293,7 @@ fn main() {
 
     let mut chain = Chain::new(MainHandler {
         root,
-        index,
+        render,
         upload,
         cache,
         range,
@@ -354,7 +355,7 @@ fn main() {
 
 struct MainHandler {
     root: PathBuf,
-    index: bool,
+    render: bool,
     upload: bool,
     cache: bool,
     range: bool,
@@ -665,7 +666,7 @@ impl MainHandler {
 
         // Directory entries
         for Entry { filename, metadata } in entries {
-            if self.index {
+            if self.render {
                 for fname in &["index.html", "index.htm"] {
                     if filename == *fname {
                         // Automatic render index page
