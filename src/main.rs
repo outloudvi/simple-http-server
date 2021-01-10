@@ -199,6 +199,10 @@ fn main() {
              .short("s")
              .takes_value(false)
              .help("Disable all outputs"))
+        .arg(clap::Arg::with_name("noindex")
+             .long("noindex")
+             .help("Disable directory index")
+            )
         .get_matches();
 
     let root = matches
@@ -225,6 +229,7 @@ fn main() {
         .parse::<u64>()
         .unwrap();
     let auth = matches.value_of("auth");
+    let dir_index = !matches.is_present("noindex");
     let compress = matches.values_of_lossy("compress");
     let threads = matches.value_of("threads").unwrap().parse::<u8>().unwrap();
     let try_file_404 = matches.value_of("try-file-404");
@@ -249,7 +254,7 @@ fn main() {
     if !silent {
         printer
             .println_out(
-                r#"   Auto render: {}, Upload: {}, Cache: {}
+                r#"   Auto render: {}, Auto index: {}, Upload: {}, Cache: {}
           Cors: {}, Range: {}, Sort: {}, Threads: {}
           Auth: {}, Compression: {}
          https: {}, Cert: {}, Cert-Password: {}
@@ -259,6 +264,7 @@ fn main() {
     ======== [{}] ========"#,
                 &vec![
                     enable_string(render),
+                    enable_string(dir_index),
                     enable_string(upload),
                     enable_string(cache),
                     enable_string(cors),
@@ -294,6 +300,7 @@ fn main() {
     let mut chain = Chain::new(MainHandler {
         root,
         render,
+        dir_index,
         upload,
         cache,
         range,
@@ -356,6 +363,7 @@ fn main() {
 struct MainHandler {
     root: PathBuf,
     render: bool,
+    dir_index: bool,
     upload: bool,
     cache: bool,
     range: bool,
@@ -436,6 +444,15 @@ impl Handler for MainHandler {
                 .iter()
                 .map(|s| s.to_string_lossy().to_string())
                 .collect();
+            if !self.dir_index {
+                return Err(IronError::new(
+                    io::Error::new(
+                        io::ErrorKind::PermissionDenied,
+                        "Directory index is disabled",
+                    ),
+                    status::Forbidden,
+                ));
+            }
             self.list_directory(req, &fs_path, &path_prefix)
         } else {
             self.send_file(req, &fs_path)
