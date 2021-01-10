@@ -755,21 +755,17 @@ impl MainHandler {
         }
 
         // Optinal upload form
-        let upload_form = if self.upload_settings.is_some() {
+        let upload_form = self.upload_settings.as_ref().map_or(String::new(), |v| {
             handlebars
                 .render(
                     "upload",
                     &json!({
                         "path": encode_link_path(path_prefix),
-                        "withpass": self.upload_settings
-                            .as_ref()
-                            .map_or(false, |v| v.is_empty())
+                        "withpass": !v.is_empty()
                     }),
                 )
                 .unwrap()
-        } else {
-            "".to_owned()
-        };
+        });
 
         let file_list = format!("<table>{}{}</table>", sort_links, rows.join("\n"));
 
