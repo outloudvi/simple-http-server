@@ -54,7 +54,7 @@ pub fn upload_settings_string(upload_settings: &Option<String>) -> String {
     match upload_settings {
         None => "disabled".to_string(),
         Some(v) => {
-            if v.len() == 0 {
+            if v.is_empty() {
                 "enabled, w/o password".to_string()
             } else {
                 format!("enabled, password: {}", v)
