@@ -13,55 +13,47 @@ USAGE:
 FLAGS:
         --cors       Enable CORS via the "Access-Control-Allow-Origin" header
     -h, --help       Prints help information
-    -i, --index      Enable automatic render index page [index.html, index.htm]
         --nocache    Disable http cache
+        --noindex    Disable directory index
         --norange    Disable header::Range support (partial request)
         --nosort     Disable directory entries sort (by: name, modified, size)
+    -r, --render     Enable automatic render index page [index.html, index.htm]
     -s, --silent     Disable all outputs
     -u, --upload     Enable upload files (multiple select)
     -V, --version    Prints version information
 
 OPTIONS:
-    -a, --auth <auth>                              HTTP Basic Auth (username:password)
-        --cert <cert>                              TLS/SSL certificate (pkcs#12 format)
-        --certpass <certpass>                      TLS/SSL certificate password
-    -c, --compress <compress>...
-            Enable file compression: gzip/deflate
-                Example: -c=js,d.ts
-                Note: disabled on partial request!
-        --ip <ip>                                  IP address to bind [default: 0.0.0.0]
-    -p, --port <port>                              Port number [default: 8000]
-        --redirect <redirect>                      takes a URL to redirect to using HTTP 301 Moved Permanently
-    -t, --threads <threads>                        How many worker threads [default: 3]
-        --try-file <PATH>
-            serve this file (server root relative) in place of missing files (useful for single page apps) [aliases:
-            try-file-404]
-    -l, --upload-size-limit <upload_size_limit>    Upload file size limit [bytes] [default: 8000000]
+    -a, --auth <auth>                      HTTP Basic Auth (username:password)
+        --cert <cert>                      TLS/SSL certificate (pkcs#12 format)
+        --certpass <certpass>              TLS/SSL certificate password
+    -c, --compress <compress>...           Enable file compression: gzip/deflate
+                                               Example: -c=js,d.ts
+                                               Note: disabled on partial request!
+        --ip <ip>                          IP address to bind [default: 0.0.0.0]
+    -p, --port <port>                      Port number [default: 8000]
+        --redirect <redirect>              takes a URL to redirect to using HTTP 301 Moved Permanently
+    -t, --threads <threads>                How many worker threads [default: 3]
+        --try-file <PATH>                  serve this file (server root relative) in place of missing files (useful for
+                                           single page apps) [aliases: try-file-404]
+        --upload-pass <upload_password>    Password for file upload
+    -l, --upload-size-limit <NUM>          Upload file size limit [bytes] [default: 8000000]
 
-
+ARGS:
+    <root>    Root directory
 ```
 
 # Installation
 
 ### Download binary 
-[Goto Download](https://github.com/TheWaWaR/simple-http-server/releases)
+[Goto Download](https://github.com/outloudvi/simple-http-server/releases)
 
  - windows-64bit
  - osx-64bit
  - linux-64bit
 
-
-### Install by cargo
-
-``` bash
-# Install Rust
-curl https://sh.rustup.rs -sSf | sh
-
-# Install simple-http-server
-cargo install simple-http-server
-rehash
-simple-http-server -h
-```
+# Features added by this fork
+- [x] Disable-able directory index
+- [ ] Password protected file upload
 
 # Features
 - [x] Windows support (with colored log)
