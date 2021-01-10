@@ -756,14 +756,14 @@ impl MainHandler {
 
         // Optinal upload form
         let upload_form = if self.upload_settings.is_some() {
-            // TODO: FIXME
-            let has_password = (self.upload_settings.unwrap()).len() > 0;
             handlebars
                 .render(
                     "upload",
                     &json!({
                         "path": encode_link_path(path_prefix),
-                        "withpass": has_password
+                        "withpass": self.upload_settings
+                            .as_ref()
+                            .map_or(false, |v| v.is_empty())
                     }),
                 )
                 .unwrap()
