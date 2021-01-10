@@ -33,7 +33,7 @@ use termcolor::{Color, ColorSpec};
 use color::{build_spec, Printer};
 use util::{
     enable_string, encode_link_path, error_io2iron, error_resp, now_string,
-    system_time_to_date_time, StringError, ROOT_LINK,
+    system_time_to_date_time, upload_settings_string, StringError, ROOT_LINK,
 };
 
 use middlewares::{AuthChecker, CompressionHandler, RequestLogger};
@@ -199,6 +199,10 @@ fn main() {
              .short("s")
              .takes_value(false)
              .help("Disable all outputs"))
+        .arg(clap::Arg::with_name("upload_password")
+             .long("upload-pass")
+             .takes_value(true)
+             .help("Password for file upload"))
         .arg(clap::Arg::with_name("noindex")
              .long("noindex")
              .help("Disable directory index")
@@ -210,7 +214,6 @@ fn main() {
         .map(|s| PathBuf::from(s).canonicalize().unwrap())
         .unwrap_or_else(|| env::current_dir().unwrap());
     let render = matches.is_present("render");
-    let upload = matches.is_present("upload");
     let redirect_to = matches
         .value_of("redirect")
         .map(iron::Url::parse)
@@ -229,6 +232,19 @@ fn main() {
         .parse::<u64>()
         .unwrap();
     let auth = matches.value_of("auth");
+    let upload_settings = match matches.value_of("upload_password") {
+        None => {
+            if matches.is_present("upload") {
+                // Upload enabled, no password
+                Some("".to_string())
+            } else {
+                // Upload disabled
+                None
+            }
+        }
+        // Upload enabled, with password
+        Some(v) => Some(v.to_string()),
+    };
     let dir_index = !matches.is_present("noindex");
     let compress = matches.values_of_lossy("compress");
     let threads = matches.value_of("threads").unwrap().parse::<u8>().unwrap();
@@ -265,7 +281,7 @@ fn main() {
                 &vec![
                     enable_string(render),
                     enable_string(dir_index),
-                    enable_string(upload),
+                    upload_settings_string(&upload_settings),
                     enable_string(cache),
                     enable_string(cors),
                     enable_string(range),
@@ -301,7 +317,7 @@ fn main() {
         root,
         render,
         dir_index,
-        upload,
+        upload_settings,
         cache,
         range,
         redirect_to,
@@ -364,7 +380,7 @@ struct MainHandler {
     root: PathBuf,
     render: bool,
     dir_index: bool,
-    upload: bool,
+    upload_settings: Option<String>,
     cache: bool,
     range: bool,
     redirect_to: Option<iron::Url>,
@@ -412,7 +428,7 @@ impl Handler for MainHandler {
             ));
         }
 
-        if self.upload && req.method == method::Post {
+        if self.upload_settings.is_some() && req.method == method::Post {
             if let Err((s, msg)) = self.save_files(req, &fs_path) {
                 return Ok(error_resp(s, &msg));
             } else {
@@ -739,9 +755,17 @@ impl MainHandler {
         }
 
         // Optinal upload form
-        let upload_form = if self.upload {
+        let upload_form = if self.upload_settings.is_some() {
+            // TODO: FIXME
+            let has_password = (self.upload_settings.unwrap()).len() > 0;
             handlebars
-                .render("upload", &json!({ "path": encode_link_path(path_prefix) }))
+                .render(
+                    "upload",
+                    &json!({
+                        "path": encode_link_path(path_prefix),
+                        "withpass": has_password
+                    }),
+                )
                 .unwrap()
         } else {
             "".to_owned()

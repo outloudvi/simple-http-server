@@ -50,6 +50,19 @@ pub fn enable_string(value: bool) -> String {
     (if value { "enabled" } else { "disabled" }).to_owned()
 }
 
+pub fn upload_settings_string(upload_settings: &Option<String>) -> String {
+    match upload_settings {
+        None => "disabled".to_string(),
+        Some(v) => {
+            if v.len() == 0 {
+                "enabled, w/o password".to_string()
+            } else {
+                format!("enabled, password: {}", v)
+            }
+        }
+    }
+}
+
 pub fn encode_link_path(path: &[String]) -> String {
     path.iter()
         .map(|s| utf8_percent_encode(s, PATH_SEGMENT_ENCODE_SET).to_string())
@@ -65,55 +78,6 @@ pub fn error_io2iron(err: io::Error) -> IronError {
     };
     IronError::new(err, status)
 }
-
-/* TODO: may not used
-
-use iron::headers::{Range, ByteRangeSpec};
-
-#[allow(dead_code)]
-pub fn parse_range(ranges: &Vec<ByteRangeSpec>, total: u64)
-                   -> Result<Option<(u64, u64)>, IronError> {
-    if let Some(range) = ranges.get(0) {
-        let (offset, length) = match range {
-            &ByteRangeSpec::FromTo(x, mut y) => { // "x-y"
-                if x >= total || x > y {
-                    return Err(IronError::new(
-                        StringError(format!("Invalid range(x={}, y={})", x, y)),
-                        status::RangeNotSatisfiable
-                    ));
-                }
-                if y >= total {
-                    y = total - 1;
-                }
-                (x, y - x + 1)
-            }
-            &ByteRangeSpec::AllFrom(x) => { // "x-"
-                if x >= total {
-                    return Err(IronError::new(
-                        StringError(format!(
-                            "Range::AllFrom to large (x={}), Content-Length: {})",
-                            x, total)),
-                        status::RangeNotSatisfiable
-                    ));
-                }
-                (x, total - x)
-            }
-            &ByteRangeSpec::Last(mut x) => { // "-x"
-                if x > total {
-                    x = total;
-                }
-                (total - x, x)
-            }
-        };
-        Ok(Some((offset, length)))
-    } else {
-        return Err(IronError::new(
-            StringError("Empty range set".to_owned()),
-            status::RangeNotSatisfiable
-        ));
-    }
-}
-*/
 
 pub fn now_string() -> String {
     Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
