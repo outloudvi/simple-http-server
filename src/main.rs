@@ -487,29 +487,62 @@ impl MainHandler {
                 // Fetching all data and processing it.
                 // save().temp() reads the request fully, parsing all fields and saving all files
                 // in a new temporary directory under the OS temporary directory.
+
                 match multipart.save().size_limit(self.upload_size_limit).temp() {
                     SaveResult::Full(entries) => {
-                        for (_, fields) in entries.fields {
-                            for field in fields {
-                                let mut data = field.data.readable().unwrap();
-                                let headers = &field.headers;
-                                let mut target_path = path.clone();
+                        // default status
+                        let mut validated =
+                            self.upload_settings.as_ref().map_or(true, |v| v.len() == 0);
+                        let mut updated_files: Vec<PathBuf> = Vec::new();
+                        let password = self.upload_settings.as_ref().unwrap();
+                        for (name, fields) in entries.fields {
+                            match name.to_string().as_str() {
+                                "files" => {
+                                    for field in fields {
+                                        let mut data = field.data.readable().unwrap();
+                                        let headers = &field.headers;
+                                        let mut target_path = path.clone();
 
-                                target_path.push(headers.filename.clone().unwrap());
-                                if let Err(errno) = std::fs::File::create(target_path)
-                                    .and_then(|mut file| io::copy(&mut data, &mut file))
-                                {
-                                    return Err((
-                                        status::InternalServerError,
-                                        format!("Copy file failed: {}", errno),
-                                    ));
-                                } else {
-                                    println!(
-                                        "  >> File saved: {}",
-                                        headers.filename.clone().unwrap()
-                                    );
+                                        target_path.push(headers.filename.clone().unwrap());
+                                        if let Err(errno) = std::fs::File::create(&target_path)
+                                            .and_then(|mut file| io::copy(&mut data, &mut file))
+                                        {
+                                            return Err((
+                                                status::InternalServerError,
+                                                format!("Copy file failed: {}", errno),
+                                            ));
+                                        } else {
+                                            updated_files.push(target_path.clone());
+                                        }
+                                    }
                                 }
+                                "password" => {
+                                    if let Some(password_field) = fields.first() {
+                                        let mut pass = String::new();
+                                        if let Ok(_) = password_field
+                                            .data
+                                            .readable()
+                                            .unwrap()
+                                            .read_to_string(&mut pass)
+                                        {
+                                            if &pass == password {
+                                                validated = true;
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            };
+                        }
+                        if validated {
+                            for i in updated_files {
+                                println!("  >> File saved: {}", i.to_str().unwrap());
                             }
+                        } else {
+                            for i in updated_files {
+                                std::fs::remove_file(i).unwrap();
+                            }
+                            return Err((status::Forbidden, format!("Wrong upload password")));
                         }
                         Ok(())
                     }
