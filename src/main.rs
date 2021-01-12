@@ -588,19 +588,22 @@ impl MainHandler {
 
         let mut handlebars = Handlebars::new();
         handlebars
-            .register_template_file("page", "./src/templates/page.hbs")
+            .register_template_string("page", include_str!("templates/page.hbs"))
             .unwrap();
         handlebars
-            .register_template_file("upload", "./src/templates/upload.hbs")
+            .register_template_string("upload", include_str!("templates/upload.hbs"))
             .unwrap();
         handlebars
-            .register_template_file("list_header", "./src/templates/list_header.hbs")
+            .register_template_string("list_header", include_str!("templates/list_header.hbs"))
             .unwrap();
         handlebars
-            .register_template_file("list_item", "./src/templates/list_item.hbs")
+            .register_template_string("list_item", include_str!("templates/list_item.hbs"))
             .unwrap();
         handlebars
-            .register_template_file("list_item_parent", "./src/templates/list_item_parent.hbs")
+            .register_template_string(
+                "list_item_parent",
+                include_str!("templates/list_item_parent.hbs"),
+            )
             .unwrap();
 
         // Breadcrumb navigation
