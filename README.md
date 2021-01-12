@@ -5,7 +5,7 @@
 
 ### Command Line Arguments
 ```
-Simple HTTP(s) Server 0.6.1
+Simple HTTP(s) Server 0.7.0
 
 USAGE:
     simple-http-server [FLAGS] [OPTIONS] [--] [root]
@@ -13,6 +13,7 @@ USAGE:
 FLAGS:
         --cors       Enable CORS via the "Access-Control-Allow-Origin" header
     -h, --help       Prints help information
+        --local      Bind to localhost. Overrides --ip
         --nocache    Disable http cache
         --noindex    Disable directory index
         --norange    Disable header::Range support (partial request)
@@ -53,7 +54,7 @@ ARGS:
 
 # Features added by this fork
 - [x] Disable-able directory index
-- [ ] Password protected file upload
+- [x] Password protected file upload
 
 # Features
 - [x] Windows support (with colored log)
