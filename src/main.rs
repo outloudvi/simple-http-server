@@ -499,7 +499,7 @@ impl MainHandler {
                     SaveResult::Full(entries) => {
                         // default status
                         let mut validated =
-                            self.upload_settings.as_ref().map_or(true, |v| v.len() == 0);
+                            self.upload_settings.as_ref().map_or(true, |v| v.is_empty());
                         let mut updated_files: Vec<PathBuf> = Vec::new();
                         let password = self.upload_settings.as_ref().unwrap();
                         for (name, fields) in entries.fields {
@@ -526,11 +526,12 @@ impl MainHandler {
                                 "password" => {
                                     if let Some(password_field) = fields.first() {
                                         let mut pass = String::new();
-                                        if let Ok(_) = password_field
+                                        if password_field
                                             .data
                                             .readable()
                                             .unwrap()
                                             .read_to_string(&mut pass)
+                                            .is_ok()
                                         {
                                             if &pass == password {
                                                 validated = true;
@@ -549,7 +550,7 @@ impl MainHandler {
                             for i in updated_files {
                                 std::fs::remove_file(i).unwrap();
                             }
-                            return Err((status::Forbidden, format!("Wrong upload password")));
+                            return Err((status::Forbidden, "Wrong upload password".to_string()));
                         }
                         Ok(())
                     }
