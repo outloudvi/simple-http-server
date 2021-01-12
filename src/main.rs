@@ -128,6 +128,9 @@ fn main() {
                  }
              })
              .help("IP address to bind"))
+        .arg(clap::Arg::with_name("local")
+             .long("local")
+             .help("Bind to localhost. Overrides --ip"))
         .arg(clap::Arg::with_name("port")
              .short("p")
              .long("port")
@@ -224,7 +227,11 @@ fn main() {
     let cert = matches.value_of("cert");
     let certpass = matches.value_of("certpass");
     let cors = matches.is_present("cors");
-    let ip = matches.value_of("ip").unwrap();
+    let ip = if matches.is_present("local") {
+        &"127.0.0.1"
+    } else {
+        matches.value_of("ip").unwrap()
+    };
     let port = matches.value_of("port").unwrap().parse::<u16>().unwrap();
     let upload_size_limit = matches
         .value_of("upload_size_limit")
